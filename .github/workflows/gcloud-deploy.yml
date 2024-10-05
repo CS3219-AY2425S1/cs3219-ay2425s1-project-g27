@@ -3,11 +3,11 @@ name: Build and Deploy Frontend, Question Service, and User Service to Cloud Run
 on:
   push:
     branches:
-      # - main
-      - feat/set-up-gcp
-  # pull_request:
-  #   branches:
-  #     - main
+      - main
+      # - feat/set-up-gcp
+  pull_request:
+    branches:
+      - main
 
 env:
   LOCATION: asia-southeast1
