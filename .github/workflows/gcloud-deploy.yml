@@ -9,6 +9,9 @@ on:
   #   branches:
   #     - main
 
+env:
+  GAR_LOCATION: asia-southeast1-docker.pkg.dev/cs3219-436914/cs3219
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -38,20 +41,20 @@ jobs:
       # Step 5: Build and Push Frontend Docker Image
       - name: Build and Push Frontend Image
         run: |
-          docker build -t cs3219/${{ secrets.GCP_PROJECT_ID }}/frontend:latest ./frontend
-          docker push cs3219/${{ secrets.GCP_PROJECT_ID }}/frontend:latest
+          docker build -t ${{ env.GAR_LOCATION }}/frontend:latest ./frontend
+          docker push ${{ env.GAR_LOCATION }}/frontend:latest
 
       # Step 6: Build and Push Question Service Docker Image
       - name: Build and Push Question Service Image
         run: |
-          docker build -t cs3219/${{ secrets.GCP_PROJECT_ID }}/question-service:latest ./question-service
-          docker push cs3219/${{ secrets.GCP_PROJECT_ID }}/question-service:latest
+          docker build -t ${{ env.GAR_LOCATION }}/question-service:latest ./question-service
+          docker push ${{ env.GAR_LOCATION }}/question-service:latest
 
       # Step 7: Build and Push User Service Docker Image
       - name: Build and Push User Service Image
         run: |
-          docker build -t cs3219/${{ secrets.GCP_PROJECT_ID }}/user-service:latest ./user-service
-          docker push cs3219/${{ secrets.GCP_PROJECT_ID }}/user-service:latest
+          docker build -t ${{ env.GAR_LOCATION }}/user-service:latest ./user-service
+          docker push ${{ env.GAR_LOCATION }}/user-service:latest
 
       # # Step 8: Deploy Frontend to Cloud Run with Environment Variables for Backend URLs
       # - name: Deploy Frontend to Cloud Run
