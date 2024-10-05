@@ -75,7 +75,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest \
-            --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.a.run.app, ENV=PROD
+            --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.a.run.app,ENV=PROD
 
       # Step 10: Deploy User Service to Cloud Run with Secret Manager for MongoDB URI
       - name: Deploy User Service to Cloud Run
