@@ -56,33 +56,33 @@ jobs:
           docker build -t ${{ env.GAR_LOCATION }}/user-service:latest ./user-service
           docker push ${{ env.GAR_LOCATION }}/user-service:latest
 
-      # # Step 8: Deploy Frontend to Cloud Run with Environment Variables for Backend URLs
-      # - name: Deploy Frontend to Cloud Run
-      #   run: |
-      #     gcloud run deploy frontend \
-      #       --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:latest \
-      #       --region us-central1 \
-      #       --platform managed \
-      #       --allow-unauthenticated \
-      #       --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app
+      # Step 8: Deploy Frontend to Cloud Run with Environment Variables for Backend URLs
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run deploy frontend \
+            --image ${{env.GAR_LOCATION}}/frontend:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app
 
-      # # Step 9: Deploy Question Service to Cloud Run with Secret Manager for MongoDB URI
-      # - name: Deploy Question Service to Cloud Run
-      #   run: |
-      #     gcloud run deploy question-service \
-      #       --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/question-service:latest \
-      #       --region us-central1 \
-      #       --platform managed \
-      #       --allow-unauthenticated \
-      #       --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_ID }}/secrets/mongodb-uri/versions/latest
-      #       --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app
+      # Step 9: Deploy Question Service to Cloud Run with Secret Manager for MongoDB URI
+      - name: Deploy Question Service to Cloud Run
+        run: |
+          gcloud run deploy question-service \
+            --image ${{env.GAR_LOCATION}}/question-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI
+            --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.a.run.app
 
-      # # Step 10: Deploy User Service to Cloud Run with Secret Manager for MongoDB URI
-      # - name: Deploy User Service to Cloud Run
-      #   run: |
-      #     gcloud run deploy user-service \
-      #       --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/user-service:latest \
-      #       --region us-central1 \
-      #       --platform managed \
-      #       --allow-unauthenticated \
-      #       --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_ID }}/secrets/mongodb-uri/versions/latest
+      # Step 10: Deploy User Service to Cloud Run with Secret Manager for MongoDB URI
+      - name: Deploy User Service to Cloud Run
+        run: |
+          gcloud run deploy user-service \
+            --image ${{env.GAR_LOCATION}}/user-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI
