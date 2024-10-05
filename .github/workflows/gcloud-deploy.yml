@@ -29,12 +29,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          install_components: 'beta'
 
       # Step 4: Authenticate Docker with GCR
-      - name: Authenticate Docker with GCR
+      - name: 'Docker auth'
         run: |
-          echo "${{ secrets.GCP_SA_KEY }}" | docker login -u _json_key --password-stdin https://gcr.io
+          gcloud auth configure-docker gcr.io
 
       # Step 5: Build and Push Frontend Docker Image
       - name: Build and Push Frontend Image
