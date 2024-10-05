@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      # - feat/set-up-gcp
+      - feat/set-up-gcp
   pull_request:
     branches:
       - main
@@ -13,61 +13,69 @@ env:
   LOCATION: asia-southeast1
 
 jobs:
-  build-and-deploy:
+  # Job 1: Build and Deploy Frontend
+  build-and-deploy-frontend:
     runs-on: ubuntu-latest
-
+    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'frontend/') || github.event_name == 'push'
     steps:
-      # Step 1: Check out the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Authenticate with Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # Step 3: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # Step 4: Authenticate Docker with GCR
-      - name: 'Docker auth'
+      - name: Docker auth
         run: |
           gcloud auth configure-docker \asia-southeast1-docker.pkg.dev
 
-      # Step 5: Build and Push Frontend Docker Image
       - name: Build and Push Frontend Image
         run: |
           docker build -t ${{ secrets.GAR_LOCATION }}/frontend:latest ./frontend
           docker push ${{ secrets.GAR_LOCATION }}/frontend:latest
 
-      # Step 6: Build and Push Question Service Docker Image
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run deploy frontend \
+            --image ${{secrets.GAR_LOCATION}}/frontend:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+
+  # Job 2: Build and Deploy Question Service
+  build-and-deploy-question-service:
+    runs-on: ubuntu-latest
+    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'question-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
       - name: Build and Push Question Service Image
         run: |
           docker build -t ${{ secrets.GAR_LOCATION }}/question-service:latest ./question-service
           docker push ${{ secrets.GAR_LOCATION }}/question-service:latest
 
-      # Step 7: Build and Push User Service Docker Image
-      - name: Build and Push User Service Image
-        run: |
-          docker build -t ${{ secrets.GAR_LOCATION }}/user-service:latest ./user-service
-          docker push ${{ secrets.GAR_LOCATION }}/user-service:latest
-
-      # Step 8: Deploy User Service to Cloud Run with Secret Manager for MongoDB URI
-      - name: Deploy User Service to Cloud Run
-        run: |
-          gcloud run deploy user-service \
-            --image ${{secrets.GAR_LOCATION}}/user-service:latest \
-            --region asia-southeast1 \
-            --platform managed \
-            --allow-unauthenticated \
-            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest,JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-jwt-secret:latest \
-            --set-env-vars ENV=PROD
-            
-      # Step 9: Deploy Question Service to Cloud Run with Secret Manager for MongoDB URI
       - name: Deploy Question Service to Cloud Run
         run: |
           gcloud run deploy question-service \
@@ -78,12 +86,39 @@ jobs:
             --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest \
             --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,ENV=PROD
 
-      # Step 10: Deploy Frontend to Cloud Run with Environment Variables for Backend URLs
-      - name: Deploy Frontend to Cloud Run
+  # Job 3: Build and Deploy User Service
+  build-and-deploy-user-service:
+    runs-on: ubuntu-latest
+    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'user-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
         run: |
-          gcloud run deploy frontend \
-            --image ${{secrets.GAR_LOCATION}}/frontend:latest \
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push User Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/user-service:latest ./user-service
+          docker push ${{ secrets.GAR_LOCATION }}/user-service:latest
+
+      - name: Deploy User Service to Cloud Run
+        run: |
+          gcloud run deploy user-service \
+            --image ${{secrets.GAR_LOCATION}}/user-service:latest \
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest,JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-jwt-secret:latest \
+            --set-env-vars ENV=PROD
