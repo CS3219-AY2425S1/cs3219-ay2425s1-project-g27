@@ -3,11 +3,11 @@ name: Build and Deploy Frontend, Question Service, and User Service to Cloud Run
 on:
   push:
     branches:
-      - main
+      # - main
       - feat/set-up-gcp
-  pull_request:
-    branches:
-      - main
+  # pull_request:
+  #   branches:
+  #     - main
 
 jobs:
   build-and-deploy:
@@ -18,38 +18,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Google Cloud SDK
+      # Step 2: Authenticate with Google Cloud
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Step 3: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+          install_components: 'beta'
 
-      # Step 3: Authenticate Docker with GCR
+      # Step 4: Authenticate Docker with GCR
       - name: Authenticate Docker with GCR
         run: |
           echo "${{ secrets.GCP_SA_KEY }}" | docker login -u _json_key --password-stdin https://gcr.io
 
-      # Step 4: Build and Push Frontend Docker Image
+      # Step 5: Build and Push Frontend Docker Image
       - name: Build and Push Frontend Image
         run: |
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:latest ./frontend
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:latest
 
-      # Step 5: Build and Push Question Service Docker Image
+      # Step 6: Build and Push Question Service Docker Image
       - name: Build and Push Question Service Image
         run: |
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/question-service:latest ./question-service
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/question-service:latest
 
-      # Step 6: Build and Push User Service Docker Image
+      # Step 7: Build and Push User Service Docker Image
       - name: Build and Push User Service Image
         run: |
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/user-service:latest ./user-service
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/user-service:latest
 
-      # # Step 7: Deploy Frontend to Cloud Run with Environment Variables for Backend URLs
+      # # Step 8: Deploy Frontend to Cloud Run with Environment Variables for Backend URLs
       # - name: Deploy Frontend to Cloud Run
       #   run: |
       #     gcloud run deploy frontend \
@@ -59,7 +64,7 @@ jobs:
       #       --allow-unauthenticated \
       #       --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app
 
-      # # Step 8: Deploy Question Service to Cloud Run with Secret Manager for MongoDB URI
+      # # Step 9: Deploy Question Service to Cloud Run with Secret Manager for MongoDB URI
       # - name: Deploy Question Service to Cloud Run
       #   run: |
       #     gcloud run deploy question-service \
@@ -70,7 +75,7 @@ jobs:
       #       --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_ID }}/secrets/mongodb-uri/versions/latest
       #       --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_ID }}.a.run.app
 
-      # # Step 9: Deploy User Service to Cloud Run with Secret Manager for MongoDB URI
+      # # Step 10: Deploy User Service to Cloud Run with Secret Manager for MongoDB URI
       # - name: Deploy User Service to Cloud Run
       #   run: |
       #     gcloud run deploy user-service \
