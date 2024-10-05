@@ -65,7 +65,7 @@ jobs:
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest \
+            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest,JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-jwt-secret:latest \
             --set-env-vars ENV=PROD
             
       # Step 9: Deploy Question Service to Cloud Run with Secret Manager for MongoDB URI
