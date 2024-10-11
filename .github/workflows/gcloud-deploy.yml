@@ -1,12 +1,10 @@
 name: Build and Deploy Frontend, Question Service, and User Service to Cloud Run
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Build Workflow"]
+    types:
+      - completed
 
 env:
   LOCATION: asia-southeast1
@@ -15,7 +13,7 @@ jobs:
   # Job 1: Build and Deploy Frontend
   build-and-deploy-frontend:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'frontend/') || github.event_name == 'push'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} && contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'frontend/') || github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -51,7 +49,7 @@ jobs:
   # Job 2: Build and Deploy Question Service
   build-and-deploy-question-service:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'question-service/') || github.event_name == 'push'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} && contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'question-service/') || github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -88,7 +86,7 @@ jobs:
   # Job 3: Build and Deploy User Service
   build-and-deploy-user-service:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'user-service/') || github.event_name == 'push'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} && contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'user-service/') || github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
