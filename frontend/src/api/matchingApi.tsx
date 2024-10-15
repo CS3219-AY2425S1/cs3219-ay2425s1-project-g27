@@ -25,3 +25,21 @@ export const findMatch = async (
     throw error;
   }
 };
+
+// Function to cancel a match request
+export const cancelMatch = async (userName: string) => {
+  const payload = {
+    userName: userName,
+  };
+  try {
+    const response = await axios.post(`${API_URL}/api/cancel`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error cancelling match:", error);
+    throw error;
+  }
+};

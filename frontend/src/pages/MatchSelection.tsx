@@ -1,18 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
-  CircularProgress,
-} from "@mui/material";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, CircularProgress } from "@mui/material";
 import Header from "../components/Header";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAllTopics } from "../api/questionApi";
-import { findMatch } from "../api/matchingApi";
+import { findMatch, cancelMatch } from "../api/matchingApi";
 import { io } from "socket.io-client";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { MatchDataResponse } from "../@types/match";
@@ -30,7 +21,6 @@ const MatchSelection = () => {
   const [noMatchFound, setNoMatchFound] = useState<boolean>(false);
   const [timer, setTimer] = useState<number>(30);
   const { user, token } = useAuth();
-
   const socketRef = useRef<any>(null);
 
   useEffect(() => {
@@ -47,9 +37,31 @@ const MatchSelection = () => {
     };
 
     getTopics();
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
   }, []);
 
-  const handleFindMatch = async (e: React.FormEvent) => {
+  interface RoomJoinResult {
+    success: boolean;
+    message?: string;
+  }
+
+  useEffect(() => {
+    if (isMatching && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (timer === 0) {
+      setIsMatching(false);
+      setNoMatchFound(true);
+      if (socketRef.current) socketRef.current.disconnect();
+    }
+  }, [isMatching, timer]);
+
+  const handleFindMatch = useCallback(async (e: React.FormEvent) => {
     setMatchUserName(null);
     setNoMatchFound(false);
     e.preventDefault();
@@ -59,55 +71,64 @@ const MatchSelection = () => {
     }
 
     socketRef.current = io(SOCKET_SERVER_URL);
-    socketRef.current.emit("join_room", { userName: user.name });
+      // Wait for the room join acknowledgment before proceeding
+    const roomJoinResult: RoomJoinResult = await new Promise((resolve) => {
+      socketRef.current.emit("join_room", { userName: user.name }, (response: RoomJoinResult) => {
+        resolve(response);
+      });
+    });
 
-    socketRef.current.on(
-      "match_found",
-      async (matchData: MatchDataResponse) => {
-        setMatchUserName(matchData.matchUserName);
-        setIsMatching(false);
-        setNoMatchFound(false);
-        socketRef.current.disconnect();
-      }
-    );
-
-    try {
-      await findMatch(user?.name, topic, difficulty);
-      setIsMatching(true);
-      setTimer(30);
-      setNoMatchFound(false);
-    } catch (error) {
-      console.error("Error submitting match request:", error);
+    socketRef.current.on("match_found", (matchData: MatchDataResponse) => {
+      setMatchUserName(matchData.matchUserName);
       setIsMatching(false);
+      setNoMatchFound(false);
       socketRef.current.disconnect();
-      return;
+    });
+
+    if (roomJoinResult.success) {
+      try {
+        await findMatch(user?.name, topic, difficulty);
+        setIsMatching(true);
+        setTimer(30);
+        setNoMatchFound(false);
+      } catch (error) {
+        console.error("Error submitting match request:", error);
+        setIsMatching(false);
+        socketRef.current.disconnect();
+        return;
+      }
+    } else {
+      console.error("Error joining room for match updates.");
+      socketRef.current.disconnect();
+    }
+  }, [user, topic, difficulty, token]);
+
+  const handleCancelMatch = useCallback(async () => {
+    setIsMatching(false);
+    if (socketRef.current) socketRef.current.disconnect();
+
+    if (!user) {
+      throw new Error("User is not logged in.");
     }
 
-    const interval = setInterval(() => {
-      setTimer((prevTimer) => {
-        if (prevTimer <= 1) {
-          clearInterval(interval);
-          setIsMatching(false);
-          setNoMatchFound(true);
-          socketRef.current.disconnect();
-          return 0;
-        }
-        return prevTimer - 1;
-      });
-    }, 1000);
+    try {
+      await cancelMatch(user.name);
+      setMatchUserName(null);
+      setNoMatchFound(false);
+      setTimer(30);
+    } catch (error) {
+      console.error("Error cancelling match:", error);
+    }
+  }, [user]);
 
-    return () => clearInterval(interval);
-  };
-
-  const handleDifficultyChange = (e: SelectChangeEvent<string>) => {
+  const handleDifficultyChange = useCallback((e: SelectChangeEvent<string>) => {
     setDifficulty(e.target.value as string);
-  };
+  }, []);
 
-  const handleTopicChange = (e: SelectChangeEvent<string>) => {
+  const handleTopicChange = useCallback((e: SelectChangeEvent<string>) => {
     setTopic(e.target.value as string);
-  };
-
-  //Placeholder join room
+  }, []);
+   //Placeholder join room
   const handleJoinRoom = () => {
     console.log("Room Joined");
   };
@@ -186,6 +207,16 @@ const MatchSelection = () => {
                 "Match"
               )}
             </Button>
+            {isMatching && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleCancelMatch}
+                sx={{ mt: 2, ml: 2, minWidth: "15%" }}
+              >
+                Cancel Matching
+              </Button>
+            )}
             {matchUserName ? (
               <Button
                 variant="contained"
