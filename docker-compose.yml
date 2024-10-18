@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - 3001:3001
+    # volumes:
+    #   - ./user-service/src:/usr/src/app
+    #   - /usr/src/app/node_modules  # Avoid overwriting node_modules
+    networks:
+      - demo-network
+    develop:
+      watch:
+        - action: sync
+          path: ./user-service
+          target: /app
+          # ignore:
+          #   - node_modules/
+        - action: rebuild
+          path: ./user-service/package.json
+
+  question-service:
+    build: ./question-service
+    ports:
+      - 3002:3002
+    environment:
+      - USER_SERVICE_URL=http://user-service:3001
+    # volumes:
+    #   - ./question-service/src:/usr/src/app
+    #   - /usr/src/app/node_modules  # Avoid overwriting node_modules
+    networks:
+      - demo-network
+    develop:
+      watch:
+        - action: sync
+          path: ./question-service
+          target: /app
+          # ignore:
+          #   - node_modules/
+        - action: rebuild
+          path: ./question-service/package.json
+
+  frontend:
+    build: ./frontend
+    ports:
+      - 5173:5173  # Expose Vite's port
+    # volumes:
+    #   - ./frontend/src:/usr/src/app
+    #   - /usr/src/app/node_modules  # Avoid overwriting node_modules
+    networks:
+      - demo-network
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          # ignore:
+          #   - node_modules/
+        - action: rebuild
+          path: ./frontend/package.json
+
+networks:
+  demo-network:
+    driver: bridge
