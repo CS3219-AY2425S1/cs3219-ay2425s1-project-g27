@@ -47,7 +47,7 @@ jobs:
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_MATCHING_API_URL=https://matching-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_COLLABORATION_API_URL==https://collaboration-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_MATCHING_API_URL=https://matching-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_COLLABORATION_API_URL=https://collaboration-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
 
   # Job 2: Build and Deploy Question Service
   build-and-deploy-question-service:
