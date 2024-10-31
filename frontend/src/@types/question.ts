@@ -6,7 +6,7 @@ export interface Question {
   complexity: string;
 }
 
-interface CreateQuestionFormData {
+export interface CreateQuestionFormData {
   title: string;
   description: string;
   complexity: string;

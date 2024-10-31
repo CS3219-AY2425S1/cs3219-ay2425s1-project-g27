@@ -1,6 +1,25 @@
 version: "3.9"
 
 services:
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - demo-network
+    healthcheck: 
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  redis: 
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - demo-network
+
   user-service:
     build: ./user-service
     ports:
@@ -40,6 +59,50 @@ services:
           #   - node_modules/
         - action: rebuild
           path: ./question-service/package.json
+  matching-service:
+    build: ./matching-service
+    ports:
+      - 3000:3000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis: 
+        condition: service_started
+    environment:
+      QUESTION_API_URL: http://question-service:3002
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+    networks:
+      - demo-network
+    develop:
+      watch:
+        - action: sync
+          path: ./matching-service
+          target: /app
+          # ignore:
+          #   - node_modules/
+        - action: rebuild
+          path: ./matching-service/package.json
+  collab-service:
+    build: ./collaboration-service
+    ports:
+      - 3003:3003
+    depends_on:
+      redis: 
+        condition: service_started
+    environment: 
+      REDIS_URL: redis://redis:6379
+    networks:
+      - demo-network
+    develop:
+      watch:
+        - action: sync
+          path: ./collaboration-service
+          target: /app
+          # ignore:
+          #   - node_modules/
+        - action: rebuild
+          path: ./collaboration-service/package.json
 
   frontend:
     build: ./frontend

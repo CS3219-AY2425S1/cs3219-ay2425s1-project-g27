@@ -6,7 +6,7 @@ export async function connectToDB() {
     let mongoUri = process.env.ENV == "PROD"
         ? process.env.DB_CLOUD_URI
         : process.env.DB_LOCAL_URI;
-    
+
     await connect(mongoUri || "");
 }
 
@@ -14,10 +14,17 @@ export async function saveQuestion(question: any) {
     return await questionModel.create(question);
 }
 
+export async function getAllTopics() {
+    const questions = await questionModel.find({}, 'category');
+    const allCategories = questions.flatMap(question => question.category);
+    const distinctCategories = [...new Set(allCategories)];
+    return distinctCategories;
+}
+
 export async function getQuestions(sort: any, order: string, pageNumber: number, limitNumber: number, filter: any,) {
     let sortOption: any = {};
     sortOption[sort] = order === 'asc' ? 1 : -1;
-    let questions: any = null; 
+    let questions: any = null;
 
     if (sort === 'complexity') {
         // Sorting by custom complexity levels using the predefined mapping
@@ -39,7 +46,7 @@ export async function getQuestions(sort: any, order: string, pageNumber: number,
             },
 
         { $sort: { complexityValue: order === 'asc' ? 1 : -1 } }
-      ]).skip((pageNumber - 1) * limitNumber)  
+      ]).skip((pageNumber - 1) * limitNumber)
       .limit(limitNumber)
 
       } else {
@@ -47,11 +54,11 @@ export async function getQuestions(sort: any, order: string, pageNumber: number,
           return await questionModel
           .find(filter)
           .sort(sortOption)
-          .skip((pageNumber - 1) * limitNumber)  
+          .skip((pageNumber - 1) * limitNumber)
           .limit(limitNumber)
       }
 
-    return questions; 
+    return questions;
 }
 
 export async function getTotalQuestions(filter: any) {
@@ -83,4 +90,22 @@ export async function updateQuestionById(id: string, title: string, description:
 
 export async function deleteQuestionById(id: string) {
     return await questionModel.findByIdAndDelete(id);
+}
+
+export async function getQuestionsByTopic(topic: string, complexity: string) {
+    try {
+        console.log('Searching for topic in category array:', topic);
+        
+        // Use $in to check if the topic exists in the category array
+        const questions = await questionModel.find({ 
+            category: { $in: [new RegExp(topic, "i")] },
+            complexity: new RegExp(complexity, "i")
+        });
+        
+        console.log('Questions found:', questions);
+        return questions;
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+        throw new Error("Unable to fetch questions.");
+      }
 }

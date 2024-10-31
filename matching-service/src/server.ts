@@ -1,32 +1,62 @@
-// src/server.ts
-import express, { Request, Response } from 'express';
+import express from "express";
+import { Server } from "socket.io";
+import http from "http";
+import matchRoutes from "./routes/match-routes";
+import { consumeMatchRequests } from "./service/match-service";
+import { connectRabbitMQ } from "./queue/rabbitmq";
+import cors from "cors";
 
-// Create an Express application
-const app = express();
-
-// Set the port
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse incoming JSON requests
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
 app.use(express.json());
+app.use(cors());
 
-// Define a simple route
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, World! This is your Express server with TypeScript.');
+// Middleware to attach the Socket.io instance to the req object
+app.use((req, res, next) => {
+  req.io = io;
+  next();
 });
 
-// Example API route (GET /api/data)
-app.get('/api/data', (req: Request, res: Response) => {
-  res.json({ message: 'Hello from the API', data: [1, 2, 3, 4, 5] });
+app.use('/api', matchRoutes);
+
+
+server.listen(PORT, async () => {
+  try {
+    await connectRabbitMQ();
+    consumeMatchRequests(io);
+    console.log(`Matching service is running on port ${PORT}`);
+  } catch (error) {
+    console.error("Failed to connect to RabbitMQ:", error);
+    process.exit(1);
+  }
 });
 
-// Example POST route (POST /api/submit)
-app.post('/api/submit', (req: Request, res: Response) => {
-  const { name, message } = req.body;
-  res.json({ message: `Hello ${name}, your message is: ${message}` });
+io.on("connection", (socket) => {
+  console.log("New client connected:", socket.id);
+
+  socket.on("join_room", (data, callback) => {
+    const { userName } = data;
+
+    // Let the user join their room
+    socket.join(userName);
+
+    console.log(`User ${userName} joined their room for match updates.`);
+
+    // Send acknowledgment back to the client
+    callback({ success: true });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});

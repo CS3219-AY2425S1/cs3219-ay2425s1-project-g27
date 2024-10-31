@@ -47,6 +47,16 @@ export const fetchQuestionById = async (id: string) => {
   }
 };
 
+export const fetchAllTopics = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/questions/topics`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all topics:", error);
+    throw error;
+  }
+};
+
 export const createQuestion = async (
   data: CreateQuestionFormData,
   token: string

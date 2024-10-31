@@ -5,7 +5,9 @@ import {
   fetchQuestionById,
   modifyQuestionById,
   removeQuestionById,
-  fetchQuestionByTitle
+  fetchQuestionByTitle,
+  fetchAllTopics,
+  fetchRandomQuestionByTopic
 } from '../controller/question-controller';  // Import your controller methods
 import { authenticateJWT, isAdmin } from '../middleware/auth-middleware';  // Import the middleware
 
@@ -16,6 +18,9 @@ router.post('/questions', authenticateJWT, isAdmin, createQuestion);
 
 // Route to get all questions
 router.get('/questions', fetchAllQuestions);
+
+// Route to get all topics for the questions
+router.get('/questions/topics', fetchAllTopics);
 
 // Route to get a specific question by ID
 router.get('/questions/:id', fetchQuestionById);
@@ -28,5 +33,8 @@ router.put('/questions/:id', authenticateJWT, isAdmin, modifyQuestionById);
 
 // Route to delete a specific question by ID
 router.delete('/questions/:id', authenticateJWT, isAdmin, removeQuestionById);
+
+router.get('/question', fetchRandomQuestionByTopic)
+
 
 export default router;

@@ -1,11 +1,11 @@
-import { saveQuestion, getQuestions, getQuestionById, updateQuestionById, deleteQuestionById, getQuestionByTitle, getTotalQuestions } from '../repo/question-repo';
+import { saveQuestion, getQuestions, getQuestionById, updateQuestionById, deleteQuestionById, getQuestionByTitle, getTotalQuestions, getAllTopics, getQuestionsByTopic } from '../repo/question-repo';
 
 export async function createQuestion(questionData: any) {
     if (!questionData.title || !questionData.description) {
         throw new Error("Title and description are required");
     }
     const existingQuestion = await getQuestionByTitle(questionData.title);
-    
+
     if (existingQuestion) {
         throw new Error('DUPLICATE_QUESTION');  // Throw an error if duplicate is found
     }
@@ -22,24 +22,24 @@ export async function fetchAllQuestions(reqQuery: any) {
 
     if (search) {
         const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
-    
+
         filter.$or = [
           { title: { $regex: searchRegex } },
           { category: { $regex: searchRegex } },
           { complexity: { $regex: searchRegex } },
         ];
       }
-    
+
     // Convert `page` and `limit` to numbers
     const pageNumber = parseInt(page as string, 10);
-    const limitNumber = parseInt(limit as string, 10); 
+    const limitNumber = parseInt(limit as string, 10);
 
     const questions = await getQuestions(sort, order, pageNumber, limitNumber, filter);
     if (!questions) {
         throw new Error("Error fetching question");
     }
 
-    const totalQuestions = await getTotalQuestions(filter); 
+    const totalQuestions = await getTotalQuestions(filter);
     if (!totalQuestions) {
         throw new Error(`Error fetching question`);
     }
@@ -90,3 +90,25 @@ export async function removeQuestionById(id: string) {
     }
     return true;
 }
+
+export async function fetchAllTopics() {
+    const topics = await getAllTopics();
+    if (!topics) {
+        throw new Error(`Topics not fetched`);
+    }
+    return topics;
+
+}
+
+export async function fetchRandomQuestionByTopic(topic: string, complexity: string) {
+    console.log("topic in service", topic);
+    const questions = await getQuestionsByTopic(topic, complexity);
+    console.log("questions", questions);
+    if (!questions) {
+        throw new Error(`Error fetching question`);
+    }
+    const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+    return randomQuestion;
+}
+
+
