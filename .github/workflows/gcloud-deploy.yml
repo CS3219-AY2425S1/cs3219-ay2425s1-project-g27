@@ -162,7 +162,7 @@ jobs:
             --set-env-vars QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
 
   # Job 5: Build and Deploy Collab Service
-  build-and-deploy-matching-service:
+  build-and-deploy-collab-service:
     runs-on: ubuntu-latest
     # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'collaboration-service/') || github.event_name == 'push'
     steps:
