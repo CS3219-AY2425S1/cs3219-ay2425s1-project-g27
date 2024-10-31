@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - feat/set-up-gcp
+      # - feat/set-up-gcp
   pull_request:
     branches:
       - main
@@ -47,7 +47,7 @@ jobs:
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+            --set-env-vars VITE_QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_API_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_MATCHING_API_URL=https://matching-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,VITE_COLLABORATION_API_URL==https://collaboration-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
 
   # Job 2: Build and Deploy Question Service
   build-and-deploy-question-service:
@@ -157,7 +157,7 @@ jobs:
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --vpc-connector cs3219-connector
+            --vpc-connector cs3219-connector \
             --set-secrets RABBITMQ_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-rabbitmq-url:latest,REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest \
             --set-env-vars QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
 
@@ -195,5 +195,5 @@ jobs:
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --vpc-connector cs3219-connector
+            --vpc-connector cs3219-connector \
             --set-secrets REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest \
