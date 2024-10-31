@@ -145,14 +145,14 @@ jobs:
         run: |
           gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
-      - name: Build and Push User Service Image
+      - name: Build and Push matching Service Image
         run: |
           docker build -t ${{ secrets.GAR_LOCATION }}/matching-service:latest ./matching-service
           docker push ${{ secrets.GAR_LOCATION }}/matching-service:latest
 
-      - name: Deploy User Service to Cloud Run
+      - name: Deploy matching Service to Cloud Run
         run: |
-          gcloud run deploy user-service \
+          gcloud run deploy matching-service \
             --image ${{secrets.GAR_LOCATION}}/matching-service:latest \
             --region asia-southeast1 \
             --platform managed \
@@ -183,14 +183,14 @@ jobs:
         run: |
           gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
-      - name: Build and Push User Service Image
+      - name: Build and Push Collab Service Image
         run: |
           docker build -t ${{ secrets.GAR_LOCATION }}/collaboration-service:latest ./collaboration-service
           docker push ${{ secrets.GAR_LOCATION }}/collaboration-service:latest
 
-      - name: Deploy User Service to Cloud Run
+      - name: Deploy Collab Service to Cloud Run
         run: |
-          gcloud run deploy user-service \
+          gcloud run deploy collaboration-service \
             --image ${{secrets.GAR_LOCATION}}/collaboration-service:latest \
             --region asia-southeast1 \
             --platform managed \
