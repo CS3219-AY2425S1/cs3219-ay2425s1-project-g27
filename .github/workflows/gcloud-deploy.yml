@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/set-up-gcp
   pull_request:
     branches:
       - main
@@ -15,7 +16,7 @@ jobs:
   # Job 1: Build and Deploy Frontend
   build-and-deploy-frontend:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'frontend/') || github.event_name == 'push'
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'frontend/') || github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -51,7 +52,7 @@ jobs:
   # Job 2: Build and Deploy Question Service
   build-and-deploy-question-service:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'question-service/') || github.event_name == 'push'
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'question-service/') || github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -88,7 +89,7 @@ jobs:
   # Job 3: Build and Deploy User Service
   build-and-deploy-user-service:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'user-service/') || github.event_name == 'push'
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'user-service/') || github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -121,3 +122,78 @@ jobs:
             --allow-unauthenticated \
             --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest,JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-jwt-secret:latest \
             --set-env-vars ENV=PROD
+      
+  # Job 4: Build and Deploy Matching Service
+  build-and-deploy-matching-service:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'matching-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push User Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/matching-service:latest ./matching-service
+          docker push ${{ secrets.GAR_LOCATION }}/matching-service:latest
+
+      - name: Deploy User Service to Cloud Run
+        run: |
+          gcloud run deploy user-service \
+            --image ${{secrets.GAR_LOCATION}}/matching-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --vpc-connector cs3219-connector
+            --set-secrets RABBITMQ_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-rabbitmq-url:latest,REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest \
+            --set-env-vars QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+
+  # Job 5: Build and Deploy Collab Service
+  build-and-deploy-matching-service:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'collaboration-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push User Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/collaboration-service:latest ./collaboration-service
+          docker push ${{ secrets.GAR_LOCATION }}/collaboration-service:latest
+
+      - name: Deploy User Service to Cloud Run
+        run: |
+          gcloud run deploy user-service \
+            --image ${{secrets.GAR_LOCATION}}/collaboration-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --vpc-connector cs3219-connector
+            --set-secrets REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest \
