@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { io, Socket } from "socket.io-client";
 import { Editor } from "@monaco-editor/react";
@@ -59,13 +59,19 @@ const CollaborativeEditor: React.FC = () => {
         };
   }, [roomId, user, navigate]);
 
-  const handleEditorChange = (newCode: string | undefined) => {
-    setCode(newCode || "");
+const handleEditorChange = useCallback(
+  (newCode: string | undefined) => {
+    if (newCode !== code) {
+      setCode(newCode || "");
 
-    if (socketRef.current) {
-      socketRef.current.emit("code_change", { roomId, code: newCode });
+      // Emit code change only if there is an actual update
+      if (socketRef.current) {
+        socketRef.current.emit("code_change", { roomId, code: newCode });
+      }
     }
-  };
+  },
+  [code, roomId]
+);
 
   const handleLeaveRoom = () => {
     cleanupCollaboration();
