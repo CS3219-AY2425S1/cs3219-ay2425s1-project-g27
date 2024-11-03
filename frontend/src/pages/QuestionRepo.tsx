@@ -13,99 +13,130 @@ import {
   MenuItem,
   TextField,
   Button,
+  Tooltip,
 } from "@mui/material";
 import Header from "../components/Header";
-import { getAllQuestions } from "../api/questionApi"; // Ensure your API supports pagination & sorting params
+import { getAllQuestions } from "../api/questionApi";
 import { Question } from "../@types/question";
 import Highlight from "../components/Highlight";
 import { useDebounce } from "../hooks/useDebounce";
-import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { fetchUserAttempts } from "../api/attemptApi";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 
 const QuestionRepo = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const entriesPerPage = 10;
 
-  const [sortField, setSortField] = useState<string>("title"); // Default sort field
-  const [sortOrder, setSortOrder] = useState<string>("asc"); // Default sort order
+  const [sortField, setSortField] = useState<string>("title");
+  const [sortOrder, setSortOrder] = useState<string>("asc");
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // debounceHook for limiting searchQuery api calls
+  const [userAttemptedQuestionIds, setUserAttemptedQuestionIds] = useState<Set<string>>(new Set());
+  const [attemptsLoading, setAttemptsLoading] = useState(false);
+  const [attemptsError, setAttemptsError] = useState<string | null>(null);
+
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const fetchQuestions = async (
-    page: number,
-    sort: string,
-    order: string,
-    search: string,
-    signal: AbortSignal
-  ) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Fetch questions with pagination and sorting
-      const data = await getAllQuestions(
-        { page, limit: entriesPerPage, sort, order, search },
-        signal
-      );
-      // Check if data is null or undefined
-      if (!data) {
-        return;
-      }
-      if (data.questions.length === 0) {
-        setError("No questions found.");
-        setQuestions([]);
-      } else {
-        setQuestions(data.questions);
-        setCurrentPage(data.currentPage);
-        setTotalPages(data.totalPages);
-        setTotalQuestions(data.totalQuestions);
-      }
-    } catch (error: any) {
-      if (axios.isCancel(error)) {
-        console.log("Request canceled:", error.message);
-        return;
-      }
-      console.error("Failed to fetch questions", error);
-      setError("No questions found.");
-      setQuestions([]); // Clear previous questions
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
+    const fetchAttempts = async () => {
+      if (!token) {
+        console.log("No token available, skipping attempts fetch.");
+        setUserAttemptedQuestionIds(new Set());
+        return;
+      }
 
-    // Fetch questions when the component mounts or sorting changes
-    fetchQuestions(
-      currentPage,
-      sortField,
-      sortOrder,
-      debouncedSearchQuery,
-      signal
-    );
+      setAttemptsLoading(true);
+      setAttemptsError(null);
 
-    let isMounted = true;
+      console.log("Starting fetchAttempts");
 
-    return () => {
-      if (!isMounted) {
-        controller.abort();
-      } else {
-        isMounted = false;
+      try {
+        const data = await fetchUserAttempts(token);
+        console.log("Fetched Attempts in QuestionRepo:", data);
+
+        if (Array.isArray(data)) {
+          const attemptedIds = new Set<string>(
+            data.map((attempt: any) =>
+              typeof attempt.questionId === "object" && attempt.questionId._id
+                ? String(attempt.questionId._id)
+                : String(attempt.questionId)
+            )
+          );
+          setUserAttemptedQuestionIds(attemptedIds);
+        } else {
+          console.error("Unexpected data format for attempts:", data);
+          setAttemptsError("Invalid data format for attempts.");
+          setUserAttemptedQuestionIds(new Set());
+        }
+      } catch (error: any) {
+        console.error("Failed to fetch user attempts:", error);
+        setAttemptsError("Failed to fetch user attempts.");
+        setUserAttemptedQuestionIds(new Set());
+      } finally {
+        setAttemptsLoading(false);
       }
     };
+
+    fetchAttempts();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setLoading(true);
+      setError(null);
+
+      console.log("fetchQuestions - Parameters:", {
+        currentPage,
+        sortField,
+        sortOrder,
+        debouncedSearchQuery,
+      });
+
+      try {
+        const data = await getAllQuestions({
+          page: currentPage,
+          limit: entriesPerPage,
+          sort: sortField,
+          order: sortOrder,
+          search: debouncedSearchQuery,
+        });
+        console.log("Fetched Questions:", data);
+
+        if (!data || data.questions.length === 0) {
+          setError("No questions found.");
+          setQuestions([]);
+        } else {
+          setQuestions(
+            data.questions.map((q: Question) => ({
+              ...q,
+              _id: String(q._id),
+            }))
+          );
+          setCurrentPage(data.currentPage);
+          setTotalPages(data.totalPages);
+          setTotalQuestions(data.totalQuestions);
+        }
+      } catch (error: any) {
+        console.error("Failed to fetch questions", error);
+        setError("Failed to fetch questions.");
+        setQuestions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
   }, [currentPage, sortField, sortOrder, debouncedSearchQuery]);
 
   const handlePageChange = (pageNumber: number) => {
@@ -122,7 +153,7 @@ const QuestionRepo = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
 
   const navigateToManageQuestions = () => {
@@ -176,7 +207,6 @@ const QuestionRepo = () => {
                 onChange={handleOrderChange}
                 size="small"
                 variant="outlined"
-                // sx={{ width: 150 }}
               >
                 <MenuItem value="asc">Ascending</MenuItem>
                 <MenuItem value="desc">Descending</MenuItem>
@@ -204,10 +234,10 @@ const QuestionRepo = () => {
             />
           </Box>
 
-          {/* Conditional Rendering Based on Loading, Error, and Data */}
+          {/* Conditional Rendering Based on Loading and Error */}
           {loading ? (
             <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-              Loading...
+              Loading Questions...
             </Typography>
           ) : error ? (
             <Typography
@@ -242,7 +272,23 @@ const QuestionRepo = () => {
                             query={searchQuery}
                           />
                         </TableCell>
-                        <TableCell>{/* Status Cell */}</TableCell>
+                        <TableCell>
+                          {userAttemptedQuestionIds.has(question._id) ? (
+                            <Tooltip title="You have attempted this question">
+                              <Box display="flex" alignItems="center">
+                                <CheckCircleIcon color="success" sx={{ mr: 0.5 }} />
+                                <Typography color="success.main">Attempted</Typography>
+                              </Box>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="You have not attempted this question">
+                              <Box display="flex" alignItems="center">
+                                <RadioButtonUncheckedIcon color="disabled" sx={{ mr: 0.5 }} />
+                                <Typography color="textSecondary">Not Attempted</Typography>
+                              </Box>
+                            </Tooltip>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Highlight
                             text={question.complexity}
@@ -284,6 +330,22 @@ const QuestionRepo = () => {
                 </Box>
               </Box>
             </>
+          )}
+
+          {/* Display Attempts Loading and Error Separately */}
+          {attemptsLoading && (
+            <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+              Loading User Attempts...
+            </Typography>
+          )}
+          {attemptsError && (
+            <Typography
+              variant="body2"
+              align="center"
+              sx={{ mt: 2, color: "red" }}
+            >
+              {attemptsError}
+            </Typography>
           )}
         </Box>
       </Container>

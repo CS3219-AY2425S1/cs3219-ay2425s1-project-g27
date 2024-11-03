@@ -17,7 +17,7 @@ export const getAllQuestions = async (
     order: string;
     search?: string;
   },
-  signal: AbortSignal
+  signal?: AbortSignal // Optional
 ) => {
   try {
     let url = `${API_URL}/api/questions?page=${page}&limit=${limit}&sort=${sort}&order=${order}`;

@@ -177,3 +177,109 @@ GET http://localhost:3002/api/questions?page=2&limit=5
 - Auth Rules:
   - Admin users: Can delete any question from the database.
   - Non-admin users: Cannot delete any question. The server verifies that the user associated with the JWT token is not an admin user and denies access.
+
+
+----
+# Question Attempt API Guide
+
+This document provides information about the various endpoints in the `attempt-routes.ts` file, which handle CRUD operations related to user attempts in Collaboration Room. 
+
+## Create Attempt
+
+- Description: This endpoint allows an authenticated user to create a new attempt, specifying the question and peer user involved in the attempt.
+
+- HTTP method: `POST`
+
+- Endpoint: `http://localhost:3002/api/attempts`
+
+- Header: Authorization: Bearer <JWT_ACCESS_TOKEN>
+
+- Body:
+
+  - Required: userId (string), questionId (string), peerUserName (string), timeTaken (number)
+  ### Example:
+  ```
+  {
+    "userId": "ID of user",
+    "questionId": "ID of question",
+    "peerUserName": "username of peer",
+    "timeTaken": 800 (Time taken for attempt in seconds)
+  }
+  ```
+
+- Headers:
+  - Required: Authorization: Bearer <JWT_ACCESS_TOKEN>
+  - Explanation: This endpoint requires the client to include a JWT (JSON Web Token) in the HTTP request header for authentication and authorization. This token is generated during the authentication process (i.e., login) and contains information about the user's identity. The server verifies this token to ensure that the client is authorized to access the data.
+  - Auth Rules:
+    - Admin users: 
+      - Can create attempts using `POST /api/attempts` 
+      - Can retrieve attempts of a user using `GET /api/attempts`
+      - Can delete latest attempt using `DELETE /api/attempts`
+      - Clean up invalid attempts for a user using `DELETE /api/attempts/cleanup`
+    - Non-admin users: Can create and retrieve attempts.
+
+## Retrieve User Attempts
+
+- Description: This endpoint allows an authenticated user to retrieve all attempts they have made.
+
+- HTTP method: `GET`
+
+- Endpoint: `http://localhost:3002/api/attempts`
+
+- Header: Authorization: Bearer <JWT_ACCESS_TOKEN>
+
+## Retrieve Attempted Question Data
+
+- Description: This endpoint allows an authenticated user to retrieve a particular attempt data based on the attempt id.
+
+- HTTP method: `GET`
+
+- Retrieve the attemptId from "Retrieve User Attempts" endpoint and place into the Endpoint URL.
+
+- Endpoint: `http://localhost:3002/api/attempts/{:attemptId}`
+
+- Header: Authorization: Bearer <JWT_ACCESS_TOKEN>
+
+
+## Delete Latest User Attempt
+
+- Description: This endpoint allows an admin to delete the latest attempt entry. Only accessible to admin users.
+
+- HTTP method: `DELETE`
+
+- Endpoint: `http://localhost:3002/api/attempts`
+
+- Header: Authorization: Bearer <JWT_ACCESS_TOKEN>
+
+- Body:
+
+  - Required: userId (string), questionId (string), peerUserName (string)
+  ### Example: To delete userId's attempt on specific questionId with a specific peer 
+  ```
+  {
+    "userId": "ID of user",
+    "questionId": "ID of question",
+    "peerUserName": "username of peer",
+  }
+  ```
+
+## Cleanup Invalid Attempts for User
+
+- Description: This endpoint allows an admin to clean up invalid attempts for a specific user, removing entries that are deemed invalid.
+
+- HTTP method: `DELETE`
+
+- Endpoint: `http://localhost:3002/api/attempts/cleanup`
+
+- Header: Authorization: Bearer <JWT_ACCESS_TOKEN>
+
+- Body:
+
+  - Required: userId (string), questionId (string)
+  ### Example: To delete userId's attempt on specific questionId
+  ```
+  {
+    "userId": "ID of user",
+    "questionId": "ID of question",
+  }
+  ```

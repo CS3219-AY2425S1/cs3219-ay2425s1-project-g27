@@ -12,6 +12,7 @@ import AdminRoute from "./AdminRoutes";
 import EditQuestion from "../pages/EditQuestion";
 import MatchSelection from "../pages/MatchSelection";
 import CollaborativeEditor from "../pages/CollaborationRoom";
+import CollaborationDetails from "../pages/CollaborationDetails";
 
 const router = createBrowserRouter([
   {
@@ -93,7 +94,17 @@ const router = createBrowserRouter([
         element: <CollaborativeEditor />,
       }
     ]
-  }
+  },
+  {
+    path: "/collaboration-details",
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "",
+        element: <CollaborationDetails />,
+      },
+    ],
+  },
 ]);
 
 export default router;

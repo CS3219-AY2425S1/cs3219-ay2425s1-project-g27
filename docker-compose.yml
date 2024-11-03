@@ -92,6 +92,7 @@ services:
         condition: service_started
     environment: 
       REDIS_URL: redis://redis:6379
+      QUESTION_SERVICE_URL: http://question-service:3002  
     networks:
       - demo-network
     develop:
