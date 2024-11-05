@@ -159,6 +159,7 @@ const handleViewAttempt = async (attemptId: string) => {
         timestamp: attempt.timestamp,
         timeTaken: attempt.timeTaken,
         codeContent: attempt.codeContent,
+        language: attempt.language, 
       },
     });
   } catch (error) {

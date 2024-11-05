@@ -123,6 +123,9 @@ export async function handleLeaveRoom(socket: Socket, { roomId, codeContent }: {
   // Fetch the current code content from Redis
   const currentCode = await redis.get(`collab:${roomId}:code`);
 
+  // Fetch the current language from Redis
+  const currentLanguage = await redis.get(`collab:${roomId}:language`);
+
   let peerUserName: string | undefined;
 
   if (peerUserNames.length > 0) {
@@ -140,7 +143,8 @@ export async function handleLeaveRoom(socket: Socket, { roomId, codeContent }: {
       questionId,
       peerUserName,
       timeTaken,
-      codeContent,
+      codeContent: currentCode,
+      language: currentLanguage,
     };
     console.log(`Sending attempt data to question-service:`, attemptData);
 

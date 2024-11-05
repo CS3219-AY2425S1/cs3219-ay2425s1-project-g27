@@ -2,14 +2,16 @@ import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const CollaborationDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   // Extract data from location.state
-  const { peerUserName, timestamp, timeTaken, codeContent } = location.state || {};
-  console.log("Received data in CollaborationDetails:", { peerUserName, timestamp, timeTaken, codeContent });
+  const { peerUserName, timestamp, timeTaken, codeContent, language } = location.state || {};
+  console.log("Received data in CollaborationDetails:", { peerUserName, timestamp, timeTaken, codeContent, language });
 
   // Format the timestamp and time taken
   const formattedTimestamp = timestamp ? format(new Date(timestamp), "dd MMMM yyyy, hh:mm a") : "N/A";
@@ -20,8 +22,8 @@ const CollaborationDetails: React.FC = () => {
       ? `${Math.floor(timeTaken / 60)}m ${timeTaken % 60}s`
       : `${timeTaken}s`;
 
-  // Split code content into lines
-  const codeLines = (codeContent || "// No code content available").split("\n");
+  // Set default language mapping to JavaScript if undefined
+  const syntaxLanguage = language ? language.toLowerCase() : "javascript";
 
   return (
     <Box sx={{ p: 4, color: "white", backgroundColor: "#1c1c1c", borderRadius: 2, maxWidth: 800, margin: "0 auto" }}>
@@ -33,7 +35,7 @@ const CollaborationDetails: React.FC = () => {
         Completed on {formattedTimestamp} in {formattedTimeTaken}
       </Typography>
 
-      {/* Code Display Section with Line Numbers */}
+      {/* Code Display Section */}
       <Box
         sx={{
           mt: 4,
@@ -44,26 +46,19 @@ const CollaborationDetails: React.FC = () => {
           color: "#f5f5f5",
           fontFamily: "monospace",
           fontSize: "1rem",
-          display: "flex",
         }}
       >
-        <Box sx={{ pr: 2, textAlign: "right", userSelect: "none", color: "#888" }}>
-          {codeLines.map((_:any, index: any) => (
-            <Typography key={index} style={{ lineHeight: "1.5rem" }}>
-              {index + 1}
-            </Typography>
-          ))}
-        </Box>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Code Written
-          </Typography>
-          <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word", margin: 0 }}>
-            {codeLines.map((line: any, index: any) => (
-              <div key={index}>{line}</div>
-            ))}
-          </pre>
-        </Box>
+        <Typography variant="h6" gutterBottom>
+          Code Written in {language || "JavaScript"}
+        </Typography>
+        <SyntaxHighlighter
+          language={syntaxLanguage}
+          style={materialDark}
+          showLineNumbers
+          wrapLines
+        >
+          {codeContent || "// No code content available"}
+        </SyntaxHighlighter>
       </Box>
 
       {/* Back Button */}

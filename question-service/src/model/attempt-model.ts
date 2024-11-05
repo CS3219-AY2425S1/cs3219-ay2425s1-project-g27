@@ -34,6 +34,10 @@ const AttemptSchema = new mongoose.Schema({
     type: String,
     required: false, // Optional but stored
   },
+  language: {
+    type: String,
+    required: false, 
+  }
 });
 
 // To prevent duplicates, consider adding a compound index
