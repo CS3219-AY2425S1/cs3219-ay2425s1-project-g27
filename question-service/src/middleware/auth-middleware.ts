@@ -13,7 +13,7 @@ export async function authenticateJWT(req: any, res: any, next: NextFunction) {
 
     try {
         // Call the user microservice to verify the token
-        const response = await axios.get(`${process.env.USER_SERVICE_URL}/auth/verify-token`, {
+        const response = await axios.get(`${process.env.USER_SERVICE_URL}/api/auth/verify-token`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { CreateQuestionFormData } from "../@types/question";
 
-const API_URL = import.meta.env.VITE_QUESTION_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const getAllQuestions = async (
   {
@@ -20,7 +20,7 @@ export const getAllQuestions = async (
   signal?: AbortSignal // Optional
 ) => {
   try {
-    let url = `${API_URL}/api/questions?page=${page}&limit=${limit}&sort=${sort}&order=${order}`;
+    let url = `${API_URL}/questions?page=${page}&limit=${limit}&sort=${sort}&order=${order}`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
@@ -39,7 +39,7 @@ export const getAllQuestions = async (
 
 export const fetchQuestionById = async (id: string) => {
   try {
-    const response = await axios.get(`${API_URL}/api/questions/${id}`);
+    const response = await axios.get(`${API_URL}/questions/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching question:", error);
@@ -49,7 +49,7 @@ export const fetchQuestionById = async (id: string) => {
 
 export const fetchAllTopics = async () => {
   try {
-    const response = await axios.get(`${API_URL}/api/questions/topics`);
+    const response = await axios.get(`${API_URL}/questions/topics`);
     return response.data;
   } catch (error) {
     console.error("Error fetching all topics:", error);
@@ -68,7 +68,7 @@ export const createQuestion = async (
     category: data.categories,
   };
   try {
-    const response = await axios.post(`${API_URL}/api/questions`, payload, {
+    const response = await axios.post(`${API_URL}/questions`, payload, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -83,7 +83,7 @@ export const createQuestion = async (
 
 export const deleteQuestionById = async (id: string, token: string) => {
   try {
-    await axios.delete(`${API_URL}/api/questions/${id}`, {
+    await axios.delete(`${API_URL}/questions/${id}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -108,7 +108,7 @@ export const updateQuestion = async (
   };
   try {
     const response = await axios.put(
-      `${API_URL}/api/questions/${id}`,
+      `${API_URL}/questions/${id}`,
       payload,
       {
         headers: {

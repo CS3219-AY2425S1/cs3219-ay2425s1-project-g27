@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_MATCHING_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const findMatch = async (
   userName: string,
@@ -13,7 +13,7 @@ export const findMatch = async (
     difficulty: difficulty,
   };
   try {
-    const response = await axios.post(`${API_URL}/api/match`, payload, {
+    const response = await axios.post(`${API_URL}/matching/match`, payload, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -32,7 +32,7 @@ export const cancelMatch = async (userName: string) => {
     userName: userName,
   };
   try {
-    const response = await axios.post(`${API_URL}/api/cancel`, payload, {
+    const response = await axios.post(`${API_URL}/matching/cancel`, payload, {
       headers: {
         "Content-Type": "application/json",
       },

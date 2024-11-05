@@ -8,12 +8,12 @@ services:
       - "15672:15672"
     networks:
       - demo-network
-    healthcheck: 
+    healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
-  redis: 
+  redis:
     image: redis:alpine
     ports:
       - "6379:6379"
@@ -66,7 +66,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      redis: 
+      redis:
         condition: service_started
     environment:
       QUESTION_API_URL: http://question-service:3002
@@ -88,9 +88,9 @@ services:
     ports:
       - 3003:3003
     depends_on:
-      redis: 
+      redis:
         condition: service_started
-    environment: 
+    environment:
       REDIS_URL: redis://redis:6379
       QUESTION_SERVICE_URL: http://question-service:3002  
     networks:
@@ -123,6 +123,21 @@ services:
           #   - node_modules/
         - action: rebuild
           path: ./frontend/package.json
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"  # Expose HTTP on port 80
+    depends_on:
+      - user-service
+      - question-service
+      - matching-service
+      - collab-service
+      - frontend
+    networks:
+      - demo-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
 
 networks:
   demo-network:

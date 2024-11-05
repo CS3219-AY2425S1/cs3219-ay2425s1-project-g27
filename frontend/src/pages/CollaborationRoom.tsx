@@ -8,7 +8,8 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import { toast } from "react-toastify";
 
-const SOCKET_SERVER_URL = import.meta.env.VITE_COLLABORATION_API_URL;
+
+const SOCKET_SERVER_URL = import.meta.env.VITE_WS_URL;
 
 const CollaborativeEditor: React.FC = () => {
   const { user, token } = useAuth(); // Destructure token directly
@@ -33,8 +34,7 @@ const CollaborativeEditor: React.FC = () => {
       return;
     }
 
-    // Initialize the socket connection
-    socketRef.current = io(SOCKET_SERVER_URL);
+    socketRef.current = io(SOCKET_SERVER_URL, {path: '/socket.io/collab'});
 
     // Retrieve the required data
     const userId = user.id; // Ensure the user object contains the userId
@@ -113,7 +113,7 @@ const CollaborativeEditor: React.FC = () => {
     if (socketRef.current && message.trim()) {
       const timestamp = Date.now();
       const chatMessage = { roomId, userName: user!!.name, message, timestamp: timestamp };
-      setMessages((prevMessages) => [...prevMessages, chatMessage]); 
+      setMessages((prevMessages) => [...prevMessages, chatMessage]);
       socketRef.current.emit("send_message", chatMessage);
       setMessage("");
     }
@@ -133,7 +133,7 @@ const CollaborativeEditor: React.FC = () => {
 
   const handleRunCode = async () => {
     if (socketRef.current) {
-      setIsLoading(true); 
+      setIsLoading(true);
       socketRef.current.emit("code_execution_started", { roomId });
       socketRef.current.emit("run_code", { roomId, code, language });
     }
@@ -145,7 +145,7 @@ const CollaborativeEditor: React.FC = () => {
     if (socketRef.current) {
       socketRef.current.emit("change_language", { roomId, newLanguage });
     }
-  }  
+  }
 
   return (
     <>
@@ -154,9 +154,9 @@ const CollaborativeEditor: React.FC = () => {
         <Box sx={{ flex: 2, pr: 4 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="h4">{question.title}</Typography>
-          <Button 
-            variant="contained" 
-            sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }} 
+          <Button
+            variant="contained"
+            sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
             onClick={handleLeaveRoom}
           >
             Leave Collaboration

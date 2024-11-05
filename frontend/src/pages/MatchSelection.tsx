@@ -12,7 +12,7 @@ import LabelValue from "../components/LabelValue";
 import { useNavigate } from "react-router-dom";
 import { Question } from "../@types/question";
 
-const SOCKET_SERVER_URL = import.meta.env.VITE_MATCHING_API_URL;
+const SOCKET_SERVER_URL = import.meta.env.VITE_WS_URL;
 
 const MatchSelection = () => {
   const [difficulty, setDifficulty] = useState<string>("Easy");
@@ -75,8 +75,7 @@ const MatchSelection = () => {
     if (!user || !token) {
       throw new Error("User is not logged in.");
     }
-
-    socketRef.current = io(SOCKET_SERVER_URL);
+    socketRef.current = io(SOCKET_SERVER_URL, {path:"/socket.io"});
       // Wait for the room join acknowledgment before proceeding
     const roomJoinResult: RoomJoinResult = await new Promise((resolve) => {
       socketRef.current.emit("join_room", { userName: user.name }, (response: RoomJoinResult) => {
@@ -138,7 +137,6 @@ const MatchSelection = () => {
   const handleTopicChange = useCallback((e: SelectChangeEvent<string>) => {
     setTopic(e.target.value as string);
   }, []);
-  
    //Placeholder join room
   const handleJoinRoom = () => {
           navigate(`/collaboration/${roomId}`, {

@@ -1,17 +1,17 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_QUESTION_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
-// Function to create an attempt 
+// Function to create an attempt
 export const createAttempt = async (attemptData: any, token: string) => {
   console.log("createAttempt called with data:", attemptData);
   console.log("Token:", token);
 
   try {
-    const response = await axios.post(`${API_URL}/api/attempts`, attemptData, {
+    const response = await axios.post(`${API_URL}/attempts`, attemptData, {
       headers: {
-        "Content-Type": "application/json", 
-        Authorization: `Bearer ${token}`,     
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
     console.log("createAttempt response:", response.data);
@@ -22,14 +22,14 @@ export const createAttempt = async (attemptData: any, token: string) => {
   }
 };
 
-// Function to fetch user attempts 
+// Function to fetch user attempts
 export const fetchUserAttempts = async (token: string, signal?: AbortSignal) => {
   console.log("fetchUserAttempts called with token:", token);
 
   try {
-    const response = await axios.get(`${API_URL}/api/attempts`, {
+    const response = await axios.get(`${API_URL}/attempts`, {
       headers: {
-        Authorization: `Bearer ${token}`, 
+        Authorization: `Bearer ${token}`,
       },
       signal,
     });
@@ -43,7 +43,7 @@ export const fetchUserAttempts = async (token: string, signal?: AbortSignal) => 
 
 export const fetchAttemptById = async (attemptId: string, token: string) => {
   try {
-    const response = await axios.get(`${API_URL}/api/attempts/${attemptId}`, {
+    const response = await axios.get(`${API_URL}/attempts/${attemptId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
