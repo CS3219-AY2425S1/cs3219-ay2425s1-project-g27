@@ -197,4 +197,4 @@ jobs:
             --allow-unauthenticated \
             --vpc-connector cs3219-connector \
             --set-secrets REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest,JUDGE0_API_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-judge0-url:latest \
-            --set-env-vars QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+            --set-env-vars QUESTION_SERVICE_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
