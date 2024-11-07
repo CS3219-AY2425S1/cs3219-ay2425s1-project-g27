@@ -42,7 +42,7 @@
 
 - HTTP Method: `POST`
 
-- Endpoint: http://localhost:3001/users
+- Endpoint: http://localhost:3001/api/users
 
 - Body
   - Required: `username` (string), `email` (string), `password` (string)
@@ -72,11 +72,11 @@
 
 - HTTP Method: `GET`
 
-- Endpoint: http://localhost:3001/users/{userId}
+- Endpoint: http://localhost:3001/api/users/{userId}
 
 - Parameters
     - Required: `userId` path parameter
-    - Example: `http://localhost:3001/users/60c72b2f9b1d4c3a2e5f8b4c`
+    - Example: `http://localhost:3001/api/users/60c72b2f9b1d4c3a2e5f8b4c`
 
 - <a name="auth-header">Headers</a>
   
@@ -104,7 +104,7 @@
 
 - This endpoint allows retrieval of all users' data from the database.
 - HTTP Method: `GET`
-- Endpoint: http://localhost:3001/users
+- Endpoint: http://localhost:3001/api/users
 - Headers
     - Required: `Authorization: Bearer <JWT_ACCESS_TOKEN>`
     - Auth Rules:
@@ -128,7 +128,7 @@
 
 - HTTP Method: `PATCH`
 
-- Endpoint: http://localhost:3001/users/{userId}
+- Endpoint: http://localhost:3001/api/users/{userId}
 
 - Parameters
   - Required: `userId` path parameter
@@ -170,7 +170,7 @@
 
 - HTTP Method: `PATCH`
 
-- Endpoint: http://localhost:3001/users/{userId}
+- Endpoint: http://localhost:3001/api/users/{userId}
 
 - Parameters
   - Required: `userId` path parameter
@@ -208,7 +208,7 @@
 
 - This endpoint allows deletion of a user and their related data from the database using the user's ID.
 - HTTP Method: `DELETE`
-- Endpoint: http://localhost:3001/users/{userId}
+- Endpoint: http://localhost:3001/api/users/{userId}
 - Parameters
 
   - Required: `userId` path parameter
