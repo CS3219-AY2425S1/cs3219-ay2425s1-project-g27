@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { io, Socket } from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import { Editor } from "@monaco-editor/react";
 import { Box, Typography, TextField, Button, List, ListItem, Paper, CircularProgress, InputLabel, FormControl, Select, MenuItem, SelectChangeEvent } from "@mui/material";
 
@@ -14,7 +14,7 @@ const SOCKET_SERVER_URL = import.meta.env.VITE_WS_URL;
 const CollaborativeEditor: React.FC = () => {
   const { user, token } = useAuth(); // Destructure token directly
   const { roomId } = useParams<{ roomId: string }>();
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<typeof Socket | null>(null);
   const [code, setCode] = useState<string>("");
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
