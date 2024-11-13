@@ -2,9 +2,6 @@
 # CS3219 Project (PeerPrep) - AY2425S1
 ## Group: G27
 
-
-# PeerPrep Project
-
 ## Microservices
 
 - [Collaboration Service](./collaboration-service/README.md)
@@ -25,8 +22,9 @@ To build and run the project using Docker, follow these steps:
 2. Build the Docker images without using cache:
    ```bash
    docker compose build --no-cache
-   docker compose up --watch -d
    ```
 
-This will guide users on how to build and run the project using the Docker commands you specified. Let me know if you have any other details you'd like to include!
-
+3. Start the Docker containers (add --watch and -d if you want to enable monitoring in detached mode)
+   ```bash
+   docker compose up --watch -d
+   ```
