@@ -64,4 +64,9 @@ export class RedisService {
   async deleteCodeRuns(roomId: string): Promise<void> {
     await this.redisClient.del(`codeRuns:${roomId}`);
   }
+
+  async getRange(roomId: string) {
+    const messages = await this.redisClient.lrange(`chat:${roomId}`, 0, -1);
+    return messages.map((message) => JSON.parse(message));
+    } 
 }

@@ -152,6 +152,11 @@ export async function handleLeaveRoom(socket: Socket, data: LeaveCollabData) {
   socket.leave(roomId);
 }
 
+export async function getChatHistory(roomId: string) {
+  console.log(`Requested to retrieve the chat history in room ${roomId}`);  
+  return redisService.getRange(roomId);  
+}
+
 export async function handleRunCode(socket: Socket, data: RunCodeData) {
   const { roomId, code, language, testCases, testTemplateCode } = data;
   socket.to(roomId).emit('code_execution_started');

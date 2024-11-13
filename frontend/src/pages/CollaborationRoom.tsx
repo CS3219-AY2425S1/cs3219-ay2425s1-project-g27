@@ -67,6 +67,9 @@ const CollaborativeEditor: React.FC = () => {
         if (response.success) {
           setIsConnected(true);
           console.log(`Joined collaboration room: ${roomId}`);
+          socketRef.current.emit("fetch_chat_history", { roomId }, (messages: any[]) => {
+            setMessages(messages);  // Set the fetched messages to the state
+          });
         } else {
           console.error("Failed to join collaboration room");
         }
