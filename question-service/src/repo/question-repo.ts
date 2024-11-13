@@ -1,0 +1,124 @@
+import questionModel from "../model/question-model";
+import questionMetadataModel from "../model/question-metadata-model";
+import "dotenv/config";
+import { connect } from "mongoose";
+
+export async function connectToDB() {
+    let mongoUri = process.env.ENV == "PROD"
+        ? process.env.DB_CLOUD_URI
+        : process.env.DB_LOCAL_URI;
+
+    await connect(mongoUri || "");
+}
+
+export async function saveQuestion(question: any) {
+    return await questionModel.create(question);
+}
+
+export async function getAllTopics() {
+    const questions = await questionModel.find({}, 'category');
+    const allCategories = questions.flatMap(question => question.category);
+    const distinctCategories = [...new Set(allCategories)];
+    return distinctCategories;
+}
+
+export async function getQuestions(sort: any, order: string, pageNumber: number, limitNumber: number, filter: any,) {
+    let sortOption: any = {};
+    sortOption[sort] = order === 'asc' ? 1 : -1;
+    let questions: any = null;
+
+    if (sort === 'complexity') {
+        // Sorting by custom complexity levels using the predefined mapping
+        questions = questionModel.aggregate([
+            { $match: filter }, // Apply the filter here
+            {
+                $addFields: {
+                    complexityValue: {
+                    $switch: {
+                        branches: [
+                        { case: { $eq: ['$complexity', 'Easy'] }, then: 1 },
+                        { case: { $eq: ['$complexity', 'Medium'] }, then: 2 },
+                        { case: { $eq: ['$complexity', 'Hard'] }, then: 3 }
+                        ],
+                        default: 4
+                    }
+                    }
+                }
+            },
+
+        { $sort: { complexityValue: order === 'asc' ? 1 : -1 } }
+      ]).skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber)
+
+      } else {
+          sortOption[sort] = order === 'asc' ? 1 : -1;
+          return await questionModel
+          .find(filter)
+          .sort(sortOption)
+          .skip((pageNumber - 1) * limitNumber)
+          .limit(limitNumber)
+      }
+
+    return questions;
+}
+
+export async function getTotalQuestions(filter: any) {
+    return await questionModel.countDocuments(filter);
+}
+
+export async function getQuestionById(id: string) {
+    return await questionModel.findById(id);
+}
+
+export async function getQuestionByTitle(title: string) {
+    return await questionModel.findOne({ title: { $regex: new RegExp('^' + title + '$', 'i') } }).exec();
+}
+
+export async function updateQuestionById(id: string, title: string, description: string, category: [string], complexity: string) {
+    return await questionModel.findByIdAndUpdate(
+        id,
+        {
+            $set: {
+                title,
+                description,
+                category,
+                complexity
+            },
+        },
+        { new: true },
+    );
+}
+
+export async function deleteQuestionById(id: string) {
+    return await questionModel.findByIdAndDelete(id);
+}
+
+export async function getQuestionsByTopic(topic: string, complexity: string) {
+    try {
+        console.log('Searching for topic in category array:', topic);
+        
+        // Use $in to check if the topic exists in the category array
+        const questions = await questionModel.find({ 
+            category: { $in: [new RegExp(topic, "i")] },
+            complexity: new RegExp(complexity, "i")
+        });
+        
+        console.log('Questions found:', questions);
+        return questions;
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+        throw new Error("Unable to fetch questions.");
+      }
+}
+
+export async function getQuestionMetadata(questionTitle: string) {
+    try {
+        const questionMetadata = await questionMetadataModel.find({ 
+            questionTitle: questionTitle
+        });
+        return questionMetadata
+    } catch (error) {
+        console.error("Error fetching question metadata:", error);
+        throw new Error("Unable to fetch question metadata");
+    }
+}

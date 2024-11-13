@@ -1,7 +1,30 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/bzPrOe11)
 # CS3219 Project (PeerPrep) - AY2425S1
-## Group: Gxx
+## Group: G27
 
-### Note: 
-- You can choose to develop individual microservices within separate folders within this repository **OR** use individual repositories (all public) for each microservice. 
-- In the latter scenario, you should enable sub-modules on this GitHub classroom repository to manage the development/deployment **AND** add your mentor to the individual repositories as a collaborator. 
-- The teaching team should be given access to the repositories as we may require viewing the history of the repository in case of any disputes or disagreements. 
+## Microservices
+
+- [Collaboration Service](./collaboration-service/README.md)
+- [Matching Service](./matching-service/README.md)
+- [Question Service](./question-service/README.md)
+- [User Service](./user-service/README.md)
+
+## Website
+You can access the frontend of our application here: [PeerPrep](https://frontend-855876857500.asia-southeast1.run.app/)
+
+
+## Running the Project Locally
+
+To build and run the project using Docker, follow these steps:
+
+1. Navigate to the root directory of the project.
+
+2. Build the Docker images without using cache:
+   ```bash
+   docker compose build --no-cache
+   ```
+
+3. Start the Docker containers (add --watch and -d if you want to enable monitoring in detached mode)
+   ```bash
+   docker compose up --watch -d
+   ```

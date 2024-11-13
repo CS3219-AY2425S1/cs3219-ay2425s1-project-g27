@@ -1,0 +1,200 @@
+name: Build and Deploy Frontend, Question Service, and User Service to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+      # - feat/set-up-gcp
+  pull_request:
+    branches:
+      - main
+
+env:
+  LOCATION: asia-southeast1
+
+jobs:
+  # Job 1: Build and Deploy Frontend
+  build-and-deploy-frontend:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'frontend/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker \asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/frontend:latest ./frontend
+          docker push ${{ secrets.GAR_LOCATION }}/frontend:latest
+
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run deploy frontend \
+            --image ${{secrets.GAR_LOCATION}}/frontend:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets VITE_API_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-api-gateway-URL:latest,VITE_WS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-api-gateway-WS:latest
+
+  # Job 2: Build and Deploy Question Service
+  build-and-deploy-question-service:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'question-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push Question Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/question-service:latest ./question-service
+          docker push ${{ secrets.GAR_LOCATION }}/question-service:latest
+
+      - name: Deploy Question Service to Cloud Run
+        run: |
+          gcloud run deploy question-service \
+            --image ${{secrets.GAR_LOCATION}}/question-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest \
+            --set-env-vars USER_SERVICE_URL=https://user-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app,ENV=PROD
+
+  # Job 3: Build and Deploy User Service
+  build-and-deploy-user-service:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'user-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push User Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/user-service:latest ./user-service
+          docker push ${{ secrets.GAR_LOCATION }}/user-service:latest
+
+      - name: Deploy User Service to Cloud Run
+        run: |
+          gcloud run deploy user-service \
+            --image ${{secrets.GAR_LOCATION}}/user-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets DB_CLOUD_URI=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-mongodb-URI:latest,JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-jwt-secret:latest \
+            --set-env-vars ENV=PROD
+      
+  # Job 4: Build and Deploy Matching Service
+  build-and-deploy-matching-service:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'matching-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push matching Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/matching-service:latest ./matching-service
+          docker push ${{ secrets.GAR_LOCATION }}/matching-service:latest
+
+      - name: Deploy matching Service to Cloud Run
+        run: |
+          gcloud run deploy matching-service \
+            --image ${{secrets.GAR_LOCATION}}/matching-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --vpc-connector cs3219-connector \
+            --set-secrets RABBITMQ_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-rabbitmq-url:latest,REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest \
+            --set-env-vars QUESTION_API_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
+
+  # Job 5: Build and Deploy Collab Service
+  build-and-deploy-collab-service:
+    runs-on: ubuntu-latest
+    # if: contains(join(github.event.pull_request.changed_files.*.filename, ' '), 'collaboration-service/') || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+
+      - name: Build and Push Collab Service Image
+        run: |
+          docker build -t ${{ secrets.GAR_LOCATION }}/collaboration-service:latest ./collaboration-service
+          docker push ${{ secrets.GAR_LOCATION }}/collaboration-service:latest
+
+      - name: Deploy Collab Service to Cloud Run
+        run: |
+          gcloud run deploy collaboration-service \
+            --image ${{secrets.GAR_LOCATION}}/collaboration-service:latest \
+            --region asia-southeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --vpc-connector cs3219-connector \
+            --set-secrets REDIS_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-redis-url:latest,JUDGE0_API_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/CS3219-judge0-url:latest \
+            --set-env-vars QUESTION_SERVICE_URL=https://question-service-${{ secrets.GCP_PROJECT_NUMBER }}.${{ env.LOCATION }}.run.app
