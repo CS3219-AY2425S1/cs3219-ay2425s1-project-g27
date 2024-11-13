@@ -2,11 +2,7 @@ import express from "express";
 import { Server } from "socket.io";
 import http from "http";
 import cors from "cors";
-<<<<<<< Updated upstream
-import { handleCodeUpdates, joinCollaborationRoom, handleLeaveRoom, handleSendMessage, handleRunCode, changeLanguage } from "./service/collaboration-service";
-=======
-import { handleCodeUpdates, joinCollaborationRoom, handleLeaveRoom, handleSendMessage, getChatHistory } from "./service/collaboration-service";
->>>>>>> Stashed changes
+import { handleCodeUpdates, joinCollaborationRoom, handleLeaveRoom, handleSendMessage, handleRunCode, changeLanguage, getChatHistory } from "./service/collaboration-service";
 
 const PORT = process.env.PORT || 3003;
 const app = express();
