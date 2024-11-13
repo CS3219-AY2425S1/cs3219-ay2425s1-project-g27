@@ -67,7 +67,6 @@ export async function handleSendMessage(socket: Socket, data: MessageData) {
 export async function handleLeaveRoom(socket: Socket, data: LeaveCollabData) {
   const { roomId, codeContent } = data;
 
-  // Get userInfo before removing from state
   const userInfo = stateManager.getUserInfo(socket.id);
   if (!userInfo) {
     console.log(`No user info found for socket ID: ${socket.id}`);
@@ -81,7 +80,6 @@ export async function handleLeaveRoom(socket: Socket, data: LeaveCollabData) {
 
   socket.to(roomId).emit("leave_collab_notify", { userName });
 
-  // Calculate time taken based on room start time
   const endTime = Date.now();
   const roomStartTime = stateManager.getRoomStartTime(roomId);
   let timeTaken: number;
